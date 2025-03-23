@@ -1,10 +1,14 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Navbar from "../shared/Navbar";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
-import { RadioGroup } from "@radix-ui/react-radio-group";
 import { Button } from "../ui/button";
 import { Link } from "react-router-dom";
+import axios from "axios";
+import { toast, ToastContainer } from "react-toastify";  // ✅ Import ToastContainer
+import "react-toastify/dist/ReactToastify.css";
+import { USER_API_END_POINT } from "@/utlis/constant";
 
 const Login = () => {
   const [input, setInput] = useState({
@@ -13,6 +17,8 @@ const Login = () => {
     role: "",
   });
 
+  const navigate = useNavigate();
+
   // Handles input changes
   const changeEventHandler = (e) => {
     setInput({ ...input, [e.target.name]: e.target.value });
@@ -20,30 +26,51 @@ const Login = () => {
 
   const submitHandler = async (e) => {
     e.preventDefault();
-    const formData = new FormData();
-    formData.append("fullname", input.fullname);
-    formData.append("email", input.email);
-    formData.append("phoneNumber", input.phoneNumber);
-    formData.append("password", input.password);
-    formData.append("role", input.role);
-    
-    if (input.file) {
-      formData.append("file", input.file);
-    }
 
     try {
-      const res = await axios.post(`${USER_API_END_POINT}/register`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+      const res = await axios.post(`${USER_API_END_POINT}/login`, input, {
+        headers: { "Content-Type": "application/json" },
         withCredentials: true,
       });
+
+      console.log(res);  // Debugging line to check the response
+
       if (res.data.success) {
-        navigate("/login");
-        toast.success(res.data.message);
+        toast.success(res.data.message, {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          theme: "light",
+        });
+
+        // ✅ Added a short delay before navigation
+        setTimeout(() => {
+          navigate("/");
+        }, 500);  
+
+      } else {
+        toast.error(res.data.message || "Login failed", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          theme: "light",
+        });
       }
+
     } catch (error) {
-      console.log(error);
+      console.error("Error:", error);
+
+      // ✅ Improved error handling with fallback message
+      toast.error(
+        error?.response?.data?.message || "Something went wrong. Please try again.", 
+     
+      );
     }
   };
 
@@ -51,6 +78,10 @@ const Login = () => {
     <div>
       <Navbar />
       <div className="flex items-center justify-center max-w-7xl mx-auto">
+        
+        {/* ✅ Added ToastContainer to ensure toast displays */}
+        <ToastContainer />
+
         <form
           onSubmit={submitHandler}
           className="w-1/2 border border-gray-200 rounded-md p-4 my-10"
@@ -82,32 +113,33 @@ const Login = () => {
           </div>
 
           {/* Role Selection */}
-          <div className="flex items-center justify-between">
-            <RadioGroup className="flex items-center gap-4 my-5">
-              <div className="flex items-center space-x-2">
+          <div className="my-2">
+            <Label>Role</Label>
+            <div className="flex gap-4 my-2">
+              <label className="flex items-center">
                 <Input
                   type="radio"
                   name="role"
                   value="student"
                   checked={input.role === "student"}
                   onChange={changeEventHandler}
-                  className="cursor-pointer"
+                  className="mr-2"
                 />
-                <Label htmlFor="r1">Student</Label>
-              </div>
+                Student
+              </label>
 
-              <div className="flex items-center space-x-2">
+              <label className="flex items-center">
                 <Input
                   type="radio"
                   name="role"
                   value="recruiter"
                   checked={input.role === "recruiter"}
                   onChange={changeEventHandler}
-                  className="cursor-pointer"
+                  className="mr-2"
                 />
-                <Label htmlFor="r2">Recruiter</Label>
-              </div>
-            </RadioGroup>
+                Recruiter
+              </label>
+            </div>
           </div>
 
           {/* Submit Button */}

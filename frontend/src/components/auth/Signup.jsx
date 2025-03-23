@@ -8,6 +8,7 @@ import { Button } from "../ui/button";
 import { Link, useNavigate } from "react-router-dom";
 import { USER_API_END_POINT } from "@/utlis/constant";
 import { toast } from "sonner";
+import axios from "axios";
 
 const Signup = () => {
   const [input, setInput] = useState({
@@ -54,7 +55,7 @@ const Signup = () => {
       }
     } catch (error) {
       console.log(error);
-      
+      toast.error(error.response.data.message)
     }
   };
 
