@@ -6,9 +6,13 @@ import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { Link } from "react-router-dom";
 import axios from "axios";
-import { toast, ToastContainer } from "react-toastify";  // ✅ Import ToastContainer
+import { toast, ToastContainer } from "react-toastify";  
 import "react-toastify/dist/ReactToastify.css";
 import { USER_API_END_POINT } from "@/utlis/constant";
+import { useDispatch, useSelector } from "react-redux";
+import { setLoading } from "@/redux/authSlice";
+import store from "@/redux/store";
+import { Loader2 } from "lucide-react";
 
 const Login = () => {
   const [input, setInput] = useState({
@@ -17,9 +21,10 @@ const Login = () => {
     role: "",
   });
 
+  const { loading } = useSelector((store) => store.auth);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
-  // Handles input changes
   const changeEventHandler = (e) => {
     setInput({ ...input, [e.target.name]: e.target.value });
   };
@@ -28,12 +33,13 @@ const Login = () => {
     e.preventDefault();
 
     try {
+      dispatch(setLoading(true));
       const res = await axios.post(`${USER_API_END_POINT}/login`, input, {
         headers: { "Content-Type": "application/json" },
         withCredentials: true,
       });
 
-      console.log(res);  // Debugging line to check the response
+      console.log(res);
 
       if (res.data.success) {
         toast.success(res.data.message, {
@@ -46,11 +52,9 @@ const Login = () => {
           theme: "light",
         });
 
-        // ✅ Added a short delay before navigation
         setTimeout(() => {
           navigate("/");
-        }, 500);  
-
+        }, 500);
       } else {
         toast.error(res.data.message || "Login failed", {
           position: "top-right",
@@ -62,15 +66,14 @@ const Login = () => {
           theme: "light",
         });
       }
-
     } catch (error) {
       console.error("Error:", error);
 
-      // ✅ Improved error handling with fallback message
       toast.error(
-        error?.response?.data?.message || "Something went wrong. Please try again.", 
-     
+        error?.response?.data?.message || "Something went wrong. Please try again."
       );
+    } finally {
+      dispatch(setLoading(false));
     }
   };
 
@@ -78,8 +81,7 @@ const Login = () => {
     <div>
       <Navbar />
       <div className="flex items-center justify-center max-w-7xl mx-auto">
-        
-        {/* ✅ Added ToastContainer to ensure toast displays */}
+
         <ToastContainer />
 
         <form
@@ -88,7 +90,6 @@ const Login = () => {
         >
           <h1 className="font-bold text-xl mb-5">Login</h1>
 
-          {/* Email Input */}
           <div className="my-2">
             <Label>Email</Label>
             <Input
@@ -100,7 +101,6 @@ const Login = () => {
             />
           </div>
 
-          {/* Password Input */}
           <div className="my-2">
             <Label>Password</Label>
             <Input
@@ -112,7 +112,6 @@ const Login = () => {
             />
           </div>
 
-          {/* Role Selection */}
           <div className="my-2">
             <Label>Role</Label>
             <div className="flex gap-4 my-2">
@@ -142,12 +141,18 @@ const Login = () => {
             </div>
           </div>
 
-          {/* Submit Button */}
-          <Button type="submit" className="w-full my-4">
-            Login
-          </Button>
+          {/* ✅ Fixed conditional rendering */}
+          {loading ? (
+            <Button className="w-full my-4" disabled>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Please Wait
+            </Button>
+          ) : (
+            <Button type="submit" className="w-full my-4">
+              Login
+            </Button>
+          )}
 
-          {/* Signup Link */}
           <span className="text-sm">
             Don't have an account?{" "}
             <Link to="/signup" className="text-blue-600">
